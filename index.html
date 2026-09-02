@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สร้างข้อความรายงานเวร กฟส.แม่อาย</title>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #6a1b9a; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="date"], select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        textarea { height: 230px; resize: vertical; }
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        button { flex: 1; padding: 10px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-generate { background-color: #4CAF50; }
+        .btn-copy { background-color: #2196F3; }
+        button:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>⚡ ระบบสร้างข้อความรายงานเวร</h2>
+    
+    <div class="form-group">
+        <label>วันที่:</label>
+        <input type="date" id="dateInput">
+    </div>
+
+    <div class="form-group">
+        <label>เวลา:</label>
+        <select id="timeSlot">
+            <option value="00.30 - 08.30 น.">00.30 - 08.30 น.</option>
+            <option value="08.30 - 16.30 น.">08.30 - 16.30 น.</option>
+            <option value="16.30 - 00.30 น.">16.30 - 00.30 น.</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>1. พนักงานแก้ไฟฟ้าขัดข้อง (เลือกจาก พนักงาน):</label>
+        <select id="emp1"></select>
+    </div>
+
+    <div class="form-group">
+        <label>2. ผู้ปฏิบัติงานคนที่ 2 (เลือกจาก คนงาน):</label>
+        <select id="worker1"></select>
+    </div>
+
+    <div class="form-group">
+        <label>3. ผู้ปฏิบัติงานคนที่ 3 (เลือกจาก คนงาน):</label>
+        <select id="worker2"></select>
+    </div>
+
+    <div class="form-group">
+        <label>พนักงานสั่งงานแก้กระแสไฟฟ้าขัดข้อง E/O (เลือกจาก พนักงาน):</label>
+        <select id="empEo"></select>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-generate" onclick="generateText()">🔄 สร้างข้อความ</button>
+        <button class="btn-copy" onclick="copyText()">📋 คัดลอกข้อความ</button>
+    </div>
+
+    <div class="form-group" style="margin-top: 20px;">
+        <label>ผลลัพธ์:</label>
+        <textarea id="resultText" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const employees = [
+        "นายวงศธร ยามเย็น 0861174231", "นายนิติพนธ์ ธิอุตม์ 0918569394", "นายอดิเรก หน่อคำ 0835292619",
+        "นายธวัชชัย สุรินทร์แก้ว 0910795580", "ชีวรัตน์ ธรรมตา 0931372055", "นายนนทชัย บัวลอย 0825610843",
+        "นายประเสริฐ ไชยประสิทธิ์ 0841511840", "นายกิตติ สุริยะ 0964788954", "นายณรงค์ชัย ใจยอด 0867312216"
+    ];
+
+    const workers = [
+        "นายณัฐกิจ นันตา 0922575992", "นายธนชัย สมสิทธิ์ 0640081102", "นายสุริยัน จันทร์ใจ 0811804964",
+        "นายจรูญศักดิ์ ลุใจคำ 0932959724", "นายไพศาล ปัญญา 0625129080", "นายกรวิทญ์ พรหมมาหล้า 0853913048",
+        "นายพงศกรณ์ บุญล้ำ 0913085091", "นาย นิวัฒน์ จันทร์หอม 064-0081102"
+    ];
+
+    const daysTh = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
+    const monthsTh = [
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+
+    function populateSelect(elementId, dataArray) {
+        const select = document.getElementById(elementId);
+        dataArray.forEach(item => {
+            let option = document.createElement("option");
+            option.value = item;
+            option.text = item;
+            select.appendChild(option);
+        });
+    }
+
+    // Initialize dropdowns
+    populateSelect("emp1", employees);
+    populateSelect("worker1", workers);
+    populateSelect("worker2", workers);
+    populateSelect("empEo", employees);
+
+    // Set today's date as default
+    document.getElementById("dateInput").valueAsDate = new Date();
+
+    function generateText() {
+        const dateVal = document.getElementById("dateInput").value;
+        if (!dateVal) return alert("กรุณาเลือกวันที่");
+
+        const dateObj = new Date(dateVal);
+        const dayName = daysTh[dateObj.getDay()];
+        const dateNum = dateObj.getDate();
+        const monthName = monthsTh[dateObj.getMonth()];
+        const yearTh = dateObj.getFullYear() + 543;
+
+        const timeSlot = document.getElementById("timeSlot").value;
+        const emp1 = document.getElementById("emp1").value;
+        const worker1 = document.getElementById("worker1").value;
+        const worker2 = document.getElementById("worker2").value;
+        const empEo = document.getElementById("empEo").value;
+
+        const template = `⚡ รายชื่อผู้ปฏิบัติงานเข้าเวร แก้ไฟฟ้าขัดข้อง กฟส.แม่อาย
+📅 ประจำวัน ${dayName} ที่ ${dateNum} เดือน ${monthName} พ.ศ.${yearTh}
+⏰ เวลา ${timeSlot}
+
+👷‍♂️ พนักงานแก้ไฟฟ้าขัดข้อง
+1. ${emp1}
+2. ${worker1}
+3. ${worker2}
+
+📡 พนักงานสั่งงานแก้กระแสไฟฟ้าขัดข้อง E/O
+${empEo}
+
+☎️ เบอร์โทรศัพท์ติดต่อ 053-459003
+📞 PEA Contact Center 1129`;
+
+        document.getElementById("resultText").value = template;
+    }
+
+    function copyText() {
+        const textArea = document.getElementById("resultText");
+        textArea.select();
+        document.execCommand("copy");
+        alert("คัดลอกข้อความแล้ว!");
+    }
+
+    // Generate initial text on load
+    window.onload = generateText;
+</script>
+
+</body>
+</html>
