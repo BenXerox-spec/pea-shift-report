@@ -31,7 +31,7 @@
 
     <div class="form-group">
         <label>เวลา:</label>
-        <select id="timeSlot">
+        <select id="timeSlot" onchange="toggleEoField(); generateText();">
             <option value="00.30 - 08.30 น.">00.30 - 08.30 น.</option>
             <option value="08.30 - 16.30 น.">08.30 - 16.30 น.</option>
             <option value="16.30 - 00.30 น.">16.30 - 00.30 น.</option>
@@ -53,7 +53,7 @@
         <select id="worker2"></select>
     </div>
 
-    <div class="form-group">
+    <div class="form-group" id="eoGroup">
         <label>พนักงานสั่งงานแก้กระแสไฟฟ้าขัดข้อง E/O (เลือกจาก พนักงาน):</label>
         <select id="empEo"></select>
     </div>
@@ -118,6 +118,16 @@
     // Set today's date as default
     document.getElementById("dateInput").valueAsDate = new Date();
 
+    function toggleEoField() {
+        const timeSlot = document.getElementById("timeSlot").value;
+        const eoGroup = document.getElementById("eoGroup");
+        if (timeSlot === "00.30 - 08.30 น.") {
+            eoGroup.style.display = "none";
+        } else {
+            eoGroup.style.display = "block";
+        }
+    }
+
     function generateText() {
         const dateVal = document.getElementById("dateInput").value;
         if (!dateVal) return alert("กรุณาเลือกวันที่");
@@ -132,7 +142,12 @@
         const emp1 = document.getElementById("emp1").value;
         const worker1 = document.getElementById("worker1").value;
         const worker2 = document.getElementById("worker2").value;
-        const empEo = document.getElementById("empEo").value;
+
+        let eoSection = "";
+        if (timeSlot !== "00.30 - 08.30 น.") {
+            const empEo = document.getElementById("empEo").value;
+            eoSection = `📡 พนักงานสั่งงานแก้กระแสไฟฟ้าขัดข้อง E/O\n${empEo}\n\n`;
+        }
 
         const template = `⚡ รายชื่อผู้ปฏิบัติงานเข้าเวร แก้ไฟฟ้าขัดข้อง กฟส.แม่อาย
 📅 ประจำวัน ${dayName} ที่ ${dateNum} เดือน ${monthName} พ.ศ.${yearTh}
@@ -143,10 +158,7 @@
 2. ${worker1}
 3. ${worker2}
 
-📡 พนักงานสั่งงานแก้กระแสไฟฟ้าขัดข้อง E/O
-${empEo}
-
-☎️ เบอร์โทรศัพท์ติดต่อ 053-459003
+${eoSection}☎️ เบอร์โทรศัพท์ติดต่อ 053-459003
 📞 PEA Contact Center 1129
 🌐 https://benxerox-spec.github.io/pea-shift-report/`;
 
@@ -160,8 +172,11 @@ ${empEo}
         alert("คัดลอกข้อความแล้ว!");
     }
 
-    // Generate initial text on load
-    window.onload = generateText;
+    // Initial setup on load
+    window.onload = function() {
+        toggleEoField();
+        generateText();
+    };
 </script>
 
 </body>
